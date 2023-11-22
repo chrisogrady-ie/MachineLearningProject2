@@ -1,11 +1,13 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn import metrics
+from sklearn import metrics, tree
 from sklearn.model_selection import KFold
 from sklearn.metrics import accuracy_score
 from datetime import datetime
 from sklearn.linear_model import Perceptron
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn import svm
 
 
 def show_img(img):
@@ -16,18 +18,29 @@ def show_img(img):
     plt.show()
 
 
-def show_time_series_plot(dict_in):
-    key = sorted(dict_in.keys())
-    values = [dict_in[time_value] for time_value in key]
+def show_time_series_plot(dict_in, model):
+    acc_pop = 0
+    acc = 0
+    dictionary = {}
+    for k in dict_in:
+        dictionary[k] = [dict_in[k][0], dict_in[k][1]]
+        acc += (dict_in[k][2])
+        acc_pop += 1
 
+    acc = acc/acc_pop
+
+    key = sorted(dictionary.keys())
+    values = [dictionary[time_value] for time_value in key]
     plt.figure(figsize=(10, 5))
+
     plt.plot(key, values, marker='o', linestyle='-')
-    plt.xlabel('Input size')
+
+    plt.xlabel('Input size  ///// Average accuracy = ' + str(acc))
     plt.ylabel('Time taken in µs')
-    plt.title('Time Series Plot of Perceptron')
+    plt.title('Time Series Plot of ' + model)
     plt.xticks(rotation=30)
     plt.tight_layout()
-    plt.show()
+    #plt.show()
 
 
 def task1():
@@ -55,7 +68,7 @@ def task1():
     return df_set
 
 
-def task2(data, sample_size):
+def task2(data, sample_size, model_type):
     this_data = data.sample(n=sample_size, random_state=21)
     kf = KFold(n_splits=10, shuffle=False)
 
@@ -67,6 +80,16 @@ def task2(data, sample_size):
     total_evaluation_time = []
     total_accuracy = []
 
+    model = Perceptron(max_iter=1000)
+    if model_type == 'decision':
+        model = tree.DecisionTreeClassifier(max_depth=10)
+
+    if model_type == 'neighbours':
+        model = KNeighborsClassifier(n_neighbors=5)
+
+    if model_type == 'svm':
+        model = svm.SVC(kernel='rbf', gamma=0.27)
+
     counter = 0
     # evaluation is an incrementing 10% chunk
     for training, evaluation in kf.split(np_pixels):
@@ -77,9 +100,9 @@ def task2(data, sample_size):
         labels_train, labels_eval = np_label[training], np_label[evaluation]
 
         # train using pixels_train and labels_train
-        model = Perceptron(max_iter=1000)
         model.fit(pixels_train, labels_train)
         split_trained = (datetime.now() - split_start).microseconds
+        split_start = datetime.now()
 
         # evaluate using pixels_eval and labels_eval
         predictions = model.predict(pixels_eval)
@@ -127,44 +150,85 @@ def task2(data, sample_size):
         if a > maximum:
             maximum = a
         total += a
-    print(f'Accuracy:\nAverage:{total/counter} Max: {maximum} Min: {minimum}')
+    average_accuracy = total/counter
+    print(f'Accuracy:\nAverage:{average_accuracy} Max: {maximum} Min: {minimum}')
 
-    return average_training_time
-
-# def task3():
-
-
-# def task4():
-
-
-# def task5():
-
-
-# def task6():
-
-
-# def task7():
+    return average_training_time, average_evaluation_time, average_accuracy
 
 
 def main():
     data = task1()
     task3_times = {
-        500: task2(data, 500),
-        2500: task2(data, 2500),
-        #5000: task2(data, 5000),
-        #7500: task2(data, 7500),
-        #10000: task2(data, 10000),
-        #12500: task2(data, 12500),
-        #15000: task2(data, 15000),
-        #18000: task2(data, 18000)
+        500: task2(data, 500, 'perceptron'),
+        2500: task2(data, 2500, 'perceptron'),
+        5000: task2(data, 5000, 'perceptron'),
+        7500: task2(data, 7500, 'perceptron'),
+        10000: task2(data, 10000, 'perceptron'),
+        12500: task2(data, 12500, 'perceptron'),
+        15000: task2(data, 15000, 'perceptron'),
+        18000: task2(data, 18000, 'perceptron')
     }
-    show_time_series_plot(task3_times)
+    show_time_series_plot(task3_times, 'perceptron')
 
-    # task3()
-    # task4()
-    # task5()
-    # task6()
-    # task7()
+    task4_times = {
+        500: task2(data, 500, 'decision'),
+        2500: task2(data, 2500, 'decision'),
+        5000: task2(data, 5000, 'decision'),
+        7500: task2(data, 7500, 'decision'),
+        10000: task2(data, 10000, 'decision'),
+        12500: task2(data, 12500, 'decision'),
+        15000: task2(data, 15000, 'decision'),
+        18000: task2(data, 18000, 'decision')
+    }
+    show_time_series_plot(task4_times, 'decision')
+
+    task5_times = {
+        500: task2(data, 500, 'neighbours'),
+        2500: task2(data, 2500, 'neighbours'),
+        5000: task2(data, 5000, 'neighbours'),
+        7500: task2(data, 7500, 'neighbours'),
+        10000: task2(data, 10000, 'neighbours'),
+        12500: task2(data, 12500, 'neighbours'),
+        15000: task2(data, 15000, 'neighbours'),
+        18000: task2(data, 18000, 'neighbours')
+    }
+    show_time_series_plot(task5_times, 'neighbours')
+
+    task6_times = {
+        500: task2(data, 500, 'svm'),
+        2500: task2(data, 2500, 'svm'),
+        #5000: task2(data, 5000, 'svm'),
+        #7500: task2(data, 7500, 'svm'),
+        #10000: task2(data, 10000, 'svm'),
+        #12500: task2(data, 12500, 'svm'),
+        #15000: task2(data, 15000, 'svm'),
+        #18000: task2(data, 18000, 'svm')
+    }
+    show_time_series_plot(task6_times, 'svm')
+
+    plt.show()
 
 
 main()
+print('\n\n')
+print('Perceptron\'s training times scale linearly with input size '
+      'and is quick with high accuracy in our dataset size. Evaluation time is almost non-existent.')
+print('With decision trees training times input size does not directly effect training and evaluation time. '
+      'Accuracy scores are high but slightly lower than Perceptron. Again, evaluation times are minimal')
+print('K-Nearest neighbours does not have a training phase as data is just saved in memory. With evaluation'
+      'times in our model, they remain in an acceptable range. However if this dataset were larger the time taken '
+      'would reach an unacceptable level and our perceptron classifier may be more efficient as accuracy levels '
+      'are similar, being high.')
+print('Support vector machine takes by far the longest and would require changing our units of measurement'
+      'from microseconds to seconds in order to account for the time taken. Depending on our y value '
+      'the accuracy ranges can be quite low. A benefit of this classification is that time needed does '
+      'not increase as much as the other methods for training and predictions. Meaning, with'
+      ' a much larger dataset it would be more efficient but all y values tested here seem to have '
+      'an accuracy of ~33 percent.')
+print('\n\n')
+print('Taking completion time and accuracy into account:\n'
+      'K-nearest neighbours\n'
+      'Perceptron\n'
+      'Decision tree\n'
+      'Support vector machine')
+
